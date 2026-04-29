@@ -1,131 +1,197 @@
-import { useState } from "react"
-import { Form, Row, Col } from "react-bootstrap"
+import { useEffect, useState } from "react"
+import { Form, Row, Col, Spinner } from "react-bootstrap"
 
-const AddAddressForm = ({ ids, formIdPrefix = "addr", onSubmitAddress }) => {
-  const [validated, setValidated] = useState(false)
-  const [address, setAddress] = useState({
-    via: "",
-    civico: "",
-    localita: "",
-    cap: "",
-    comune: "",
-  })
+const AddAddressForm = ({
+  formIdPrefix = "addr",
+  onValidationChange,
+  address,
+  setAddress,
+}) => {
+  const [provinces, setProvinces] = useState([])
+  const [comuni, setComuni] = useState([])
+  const [selectedProvince, setSelectedProvince] = useState("")
+  const [isLoadingComuni, setIsLoadingComuni] = useState(false)
 
+  // Fetch Provinces on Mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/province")
+        const data = await response.json()
+        setProvinces(data)
+        console.log(data)
+      } catch (error) {
+        console.error("Error fetching provinces:", error)
+      }
+    }
+    fetchProvinces()
+  }, [])
+
+  // Fetch Comuni when Provincia changes
+  useEffect(() => {
+    if (selectedProvince === "") return
+
+    let isIgnore = false
+    const fetchComuni = async () => {
+      setIsLoadingComuni(true)
+      try {
+        const response = await fetch(
+          `http://localhost:3001/provincia?sigla=${selectedProvince}`,
+        )
+        const data = await response.json()
+        if (!isIgnore) setComuni(data)
+        console.log("comuni", data)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        if (!isIgnore) setIsLoadingComuni(false)
+      }
+    }
+
+    fetchComuni()
+    return () => {
+      isIgnore = true
+    }
+  }, [selectedProvince])
+
+  // handle province change effect on comuni
   const handleChange = (e) => {
     const { name, value } = e.target
-    setAddress((prev) => ({ ...prev, [name]: value }))
-  }
+    const updatedAddress = { ...address, [name]: value }
+    setAddress(updatedAddress)
 
-  const handleSubmit = (event) => {
-    const form = event.currentTarget
-    event.preventDefault()
-
-    if (form.checkValidity() === false) {
-      event.stopPropagation()
-    } else {
-      const finalData = { ...ids, ...address }
-      if (onSubmitAddress) onSubmitAddress(finalData)
+    if (name === "provincia") {
+      setSelectedProvince(value)
+      setAddress({ ...updatedAddress, comune: "" })
+      setComuni([])
     }
-    setValidated(true)
+
+    const isFormValid = e.target.form.checkValidity() ?? false
+    if (onValidationChange) onValidationChange(isFormValid)
   }
 
   return (
     <>
-      <h4 className="mb-4">Nuovo Indirizzo</h4>
-
-      <Form
-        noValidate
-        validated={validated}
-        onSubmit={handleSubmit}
+      <Form.Group
+        className="mb-3"
+        controlId={`${formIdPrefix}-via`}
       >
-        {/* Use formIdPrefix to ensure unique HTML IDs */}
+        <Form.Label>Via / Corso</Form.Label>
+        <Form.Control
+          required
+          name="via"
+          value={address.via}
+          onChange={handleChange}
+          placeholder="es. Corso Vittorio II"
+        />
+      </Form.Group>
+
+      <Row className="mb-3">
         <Form.Group
-          className="mb-3"
-          controlId={`${formIdPrefix}-via`}
+          as={Col}
+          md="3"
+          controlId={`${formIdPrefix}-civico`}
         >
-          <Form.Label>Via / Corso</Form.Label>
+          <Form.Label>Civico</Form.Label>
           <Form.Control
             required
-            name="via"
-            type="text"
-            value={address.via}
+            name="civico"
+            value={address.civico}
             onChange={handleChange}
-            placeholder="es. Corso Vittorio II"
+            placeholder="42"
           />
         </Form.Group>
 
-        <Row className="mb-3">
-          <Form.Group
-            as={Col}
-            controlId={`${formIdPrefix}-civico`}
+        <Form.Group
+          as={Col}
+          md="3"
+          controlId={`${formIdPrefix}-cap`}
+        >
+          <Form.Label>CAP</Form.Label>
+          <Form.Control
+            required
+            name="cap"
+            value={address.cap}
+            onChange={handleChange}
+            placeholder="12345"
+          />
+        </Form.Group>
+
+        <Form.Group
+          as={Col}
+          md="6"
+          controlId={`${formIdPrefix}-localita`}
+        >
+          <Form.Label>Località</Form.Label>
+          <Form.Control
+            required
+            name="localita"
+            value={address.localita}
+            onChange={handleChange}
+            placeholder="Roma"
+          />
+        </Form.Group>
+      </Row>
+
+      <Row className="mb-3">
+        <Form.Group
+          as={Col}
+          controlId={`${formIdPrefix}-provincia`}
+        >
+          <Form.Label>Provincia</Form.Label>
+          <Form.Select
+            required
+            name="provincia"
+            value={address.provincia || ""}
+            onChange={handleChange}
           >
-            <Form.Label>Civico</Form.Label>
-            <Form.Control
-              required
-              name="civico"
-              type="text"
-              value={address.civico}
-              onChange={handleChange}
-            />
-          </Form.Group>
-          <Form.Group
-            as={Col}
-            controlId={`${formIdPrefix}-cap`}
+            <option value="">Seleziona...</option>
+            {provinces.map((p) => (
+              <option
+                key={p.id}
+                value={p.sigla}
+              >
+                {p.nome} - {p.sigla}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group
+          as={Col}
+          controlId={`${formIdPrefix}-comune`}
+        >
+          <Form.Label>
+            Comune{" "}
+            {isLoadingComuni && (
+              <Spinner
+                animation="border"
+                size="sm"
+                className="ms-2"
+              />
+            )}
+          </Form.Label>
+          <Form.Select
+            required
+            name="comune"
+            value={address.comune || ""}
+            onChange={handleChange}
+            disabled={selectedProvince === "" || isLoadingComuni}
           >
-            <Form.Label>CAP</Form.Label>
-            <Form.Control
-              required
-              name="cap"
-              type="text"
-              value={address.cap}
-              onChange={handleChange}
-            />
-          </Form.Group>{" "}
-          <Form.Group
-            as={Col}
-            controlId={`${formIdPrefix}-localita`}
-          >
-            <Form.Label>Località</Form.Label>
-            <Form.Control
-              required
-              name="localita"
-              type="text"
-              value={address.localita}
-              onChange={handleChange}
-            />
-          </Form.Group>
-        </Row>
-        <Row className="mb-3">
-          <Form.Group
-            as={Col}
-            controlId={`${formIdPrefix}-comune`}
-          >
-            <Form.Label>Provincia</Form.Label>
-            {/* Insert API fetch and generate dropdown here */}
-            <Form.Control
-              required
-              name="comune"
-              type="text"
-              value={address.comune}
-              onChange={handleChange}
-            />
-          </Form.Group>
-          <Form.Group
-            as={Col}
-            controlId={`${formIdPrefix}-comune`}
-          >
-            <Form.Label>Comune</Form.Label>
-            {/* Insert API fetch and generate dropdown here */}
-            <Form.Control
-              required
-              name="comune"
-              type="text"
-              value={address.comune}
-              onChange={handleChange}
-            />
-          </Form.Group>
-        </Row>
-      </Form>
+            <option value="">
+              {isLoadingComuni ? "Caricamento..." : "Seleziona..."}
+            </option>
+            {comuni.map((c) => (
+              <option
+                key={c.id}
+                value={c.id}
+              >
+                {c.nome}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+      </Row>
     </>
   )
 }

@@ -1,16 +1,104 @@
-import { Col, Container, Row } from "react-bootstrap"
+import { Alert, Col, Container, InputGroup, Row } from "react-bootstrap"
 import Button from "react-bootstrap/Button"
 import Form from "react-bootstrap/Form"
 import AddAddressForm from "./AddAddressForm"
+import { useState } from "react"
 
 function CreateClientForm() {
+  const [validated, setValidated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+  const [sedeDiversa, setSedeDiversa] = useState(false)
+
+  const [formData, setFormData] = useState({
+    ragioneSociale: "",
+    partitaIva: "",
+    email: "",
+    pec: "",
+    tipoAzienda: "",
+    fatturatoAnuale: "",
+    telefono: "",
+    nomeContatto: "",
+    cognomeContatto: "",
+    emailContatto: "",
+    telefonoContatto: "",
+  })
+
+  const [sedeLegale, setSedeLegale] = useState({
+    provincia: "",
+    comune: "",
+    via: "",
+    civico: "",
+    cap: "",
+    localita: "",
+  })
+
+  const [sedeOperativa, setSedeOperativa] = useState({
+    provincia: "",
+    comune: "",
+    via: "",
+    civico: "",
+    cap: "",
+    localita: "",
+  })
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const form = e.currentTarget
+
+    if (!form.checkValidity()) {
+      e.stopPropagation()
+      setValidated(true)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    const payload = {
+      ...formData,
+      sedeLegale,
+      sedeOperativa: sedeDiversa ? sedeOperativa : sedeLegale,
+    }
+
+    try {
+      const response = await fetch("http://localhost:3001/clienti", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) throw new Error("Errore durante il salvataggio")
+
+      setSuccess(true)
+      setValidated(false)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <Container
-      className="mt-5 bg-grey"
+      className="pt-5 bg-grey"
       fluid="sm"
     >
       <h1 className="text-center pb-4">Inserisci i dati della Azienda</h1>
-      <Form>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {success && (
+        <Alert variant="success">Azienda salvata con successo!</Alert>
+      )}
+      <Form
+        noValidate
+        validated={validated}
+        onSubmit={handleSubmit}
+      >
         <h5>Dati aziendale</h5>
         <div className="border rounded p-3 mb-3">
           <Row>
@@ -23,9 +111,16 @@ function CreateClientForm() {
                 <Form.Label>Ragione Sociale</Form.Label>
                 <br />
                 <Form.Control
+                  required
                   type="text"
-                  placeholder="Inserisce la ragione sociale"
+                  name="ragioneSociale"
+                  value={formData.ragioneSociale}
+                  onChange={handleChange}
+                  placeholder="Nome della Azienda S.P.A."
                 />
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             {/* partita IVA */}
@@ -37,9 +132,16 @@ function CreateClientForm() {
                 <Form.Label>Partita IVA</Form.Label>
                 <br />
                 <Form.Control
+                  required
                   type="text"
-                  placeholder="Inserisce la partita IVA"
+                  name="partitaIva"
+                  value={formData.partitaIva}
+                  onChange={handleChange}
+                  placeholder="12345678910"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -51,14 +153,17 @@ function CreateClientForm() {
                 className="mb-3"
                 controlId="formBasicEmail"
               >
-                <Form.Label>Indirizzo email</Form.Label>
-                <br />
+                <Form.Label>Indirizzo email aziendale</Form.Label>
                 <Form.Control
+                  required
                   type="email"
-                  placeholder="Inserisci la email aziendale"
-                />{" "}
-                <Form.Text className="text-muted ">
-                  Non condivideremo mai il tuo indirizzo e-mail con nessuno.
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="contatto@azienda.it"
+                />
+                <Form.Text className="text-muted">
+                  Non condivideremo mai il tuo indirizzo e-mail con nessuno
                 </Form.Text>
               </Form.Group>
             </Col>
@@ -68,12 +173,19 @@ function CreateClientForm() {
                 className="mb-3"
                 controlId="formPec"
               >
-                <Form.Label>Email PEC</Form.Label>
+                <Form.Label>Indirizzo email PEC</Form.Label>
                 <br />
                 <Form.Control
+                  required
                   type="email"
-                  placeholder="Inserisce la pec"
+                  name="pec"
+                  value={formData.pec}
+                  onChange={handleChange}
+                  placeholder="azienda@pecmail.it"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Inserisci una PEC valida
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -85,15 +197,22 @@ function CreateClientForm() {
                 controlId="formTipoAzienda"
               >
                 <Form.Label>Tipo Azienda</Form.Label>
-                <br />
-                <Form.Select aria-label="Default select example">
-                  {/*  build the loop based on the types available - make endpoint for this? */}
-                  <option>Open this select menu</option>
+                {/*  build the loop based on the types available - make endpoint for this? */}
+                <Form.Select
+                  required
+                  name="tipoAzienda"
+                  value={formData.tipoAzienda}
+                  onChange={handleChange}
+                >
+                  <option value="">Seleziona...</option>
                   <option value="PA">PA</option>
                   <option value="SAS">SAS</option>
                   <option value="SPA">SPA</option>
                   <option value="SRL">SRL</option>
                 </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  Seleziona un tipo azienda
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col>
@@ -103,12 +222,21 @@ function CreateClientForm() {
                 className="mb-3"
                 controlId="formFatturatoAnuale"
               >
-                <Form.Label>Fatturato Anuale</Form.Label>
-                <br />
-                <Form.Control
-                  type="text"
-                  placeholder="Inserisce il fatturato anuale"
-                />
+                <Form.Label>Fatturato Anuale in Euros</Form.Label>
+                <InputGroup>
+                  <InputGroup.Text>€ </InputGroup.Text>
+                  <Form.Control
+                    required
+                    type="number"
+                    name="fatturatoAnuale"
+                    value={formData.fatturatoAnuale}
+                    onChange={handleChange}
+                    placeholder="10000"
+                  />
+                </InputGroup>
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col>
@@ -140,9 +268,16 @@ function CreateClientForm() {
                 <Form.Label>Nome persona di contatto</Form.Label>
                 <br />
                 <Form.Control
+                  required
                   type="text"
-                  placeholder="Nome persona di contatto"
+                  name="nomeContatto"
+                  value={formData.nomeContatto}
+                  onChange={handleChange}
+                  placeholder="Mario"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             {/*  cognome  contato */}
@@ -155,9 +290,16 @@ function CreateClientForm() {
                 <Form.Label>Cognome persona di contatto</Form.Label>
                 <br />
                 <Form.Control
-                  type="text"
-                  placeholder="Cognome persona di contatto"
+                  required
+                  type="email"
+                  name="emailContatto"
+                  value={formData.emailContatto}
+                  onChange={handleChange}
+                  placeholder="m.rossi@azienda.it"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Inserisci un'email valida
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -186,9 +328,16 @@ function CreateClientForm() {
                 <Form.Label>Telefono di contatto</Form.Label>
                 <br />
                 <Form.Control
+                  required
                   type="number"
+                  name="telefonoContatto"
+                  value={formData.telefonoContatto}
+                  onChange={handleChange}
                   placeholder="Inserisce il telefono"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -196,7 +345,11 @@ function CreateClientForm() {
         <h5>Indirizzi</h5>
         <div className="border rounded p-3 mb-3">
           <Form.Group>
-            <AddAddressForm />
+            <AddAddressForm
+              address={sedeLegale}
+              setAddress={setSedeLegale}
+              formIdPrefix="legale"
+            />
           </Form.Group>
           <Form.Group
             className="mb-3"
@@ -204,18 +357,26 @@ function CreateClientForm() {
           >
             <Form.Check
               type="checkbox"
-              label="Sede Legale diversa della sede Operativa?"
+              label="Sede Legale diversa dalla sede Operativa?"
+              checked={sedeDiversa}
+              onChange={(e) => setSedeDiversa(e.target.checked)}
             />
           </Form.Group>
-          {/* {formSedeOperativa ? <AddAddressForm /> : ""} */}
-          <Form.Group>{/* AddAdressForm */}</Form.Group>
+          {sedeDiversa && (
+            <AddAddressForm
+              address={sedeOperativa}
+              setAddress={setSedeOperativa}
+              formIdPrefix="operativa"
+            />
+          )}
         </div>
 
         <Button
           variant="primary"
           type="submit"
+          disabled={isLoading}
         >
-          Submit
+          {isLoading ? "Salvataggio..." : "Submit"}
         </Button>
       </Form>
     </Container>

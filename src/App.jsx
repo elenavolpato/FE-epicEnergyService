@@ -2,17 +2,23 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
 import CreateClientForm from "./components/CreateClientForm"
 import "bootstrap/dist/css/bootstrap.min.css"
+import { Container } from "react-bootstrap"
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/register"
-          element={<CreateClientForm />}
-        />
-      </Routes>
-    </BrowserRouter>
+    <div
+      data-bs-theme="dark"
+      className="bg-dark text-white"
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/register"
+            element={<CreateClientForm />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 }
 
