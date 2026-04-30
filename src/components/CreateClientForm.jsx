@@ -16,7 +16,7 @@ function CreateClientForm() {
     partitaIva: "",
     email: "",
     pec: "",
-    tipoAzienda: "",
+    tipo: "",
     fatturatoAnuale: "",
     telefono: "",
     nomeContatto: "",
@@ -26,21 +26,21 @@ function CreateClientForm() {
   })
 
   const [sedeLegale, setSedeLegale] = useState({
-    provincia: "",
     comune: "",
     via: "",
     civico: "",
     cap: "",
     localita: "",
+    provincia: "",
   })
 
   const [sedeOperativa, setSedeOperativa] = useState({
-    provincia: "",
     comune: "",
     via: "",
     civico: "",
     cap: "",
     localita: "",
+    provincia: "",
   })
 
   const handleChange = (e) => {
@@ -61,10 +61,14 @@ function CreateClientForm() {
     setIsLoading(true)
     setError(null)
 
+    const stripProvincia = ({ provincia, ...rest }) => rest // ✅ add this
+
     const payload = {
       ...formData,
-      sedeLegale,
-      sedeOperativa: sedeDiversa ? sedeOperativa : sedeLegale,
+      sedeLegale: stripProvincia(sedeLegale), // ✅ strip here
+      sedeOperativa: sedeDiversa
+        ? stripProvincia(sedeOperativa)
+        : stripProvincia(sedeLegale),
     }
 
     try {
@@ -73,6 +77,7 @@ function CreateClientForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
+      console.log(payload)
       if (!response.ok) throw new Error("Errore durante il salvataggio")
 
       setSuccess(true)
@@ -85,11 +90,9 @@ function CreateClientForm() {
   }
 
   return (
-    <Container
-      className="pt-5 bg-grey"
-      fluid="sm"
-    >
-      <h1 className="text-center pb-4">Inserisci i dati della Azienda</h1>
+    <Container className="py-5 bg-grey">
+      <h1 className="text-warning">EPIC Energy Services</h1>
+      <h4 className=" pb-4">Inserisci i dati della Azienda</h4>
       {error && <Alert variant="danger">{error}</Alert>}
       {success && (
         <Alert variant="success">Azienda salvata con successo!</Alert>
@@ -100,7 +103,7 @@ function CreateClientForm() {
         onSubmit={handleSubmit}
       >
         <h5>Dati aziendale</h5>
-        <div className="border rounded p-3 mb-3">
+        <div className="border rounded p-3 mb-3 ">
           <Row>
             <Col>
               {/* ragione sociale */}
@@ -162,9 +165,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="contatto@azienda.it"
                 />
-                <Form.Text className="text-muted">
-                  Non condivideremo mai il tuo indirizzo e-mail con nessuno
-                </Form.Text>
+                <Form.Text className="text-muted">Campo obbligatorio</Form.Text>
               </Form.Group>
             </Col>
             <Col>
@@ -200,8 +201,8 @@ function CreateClientForm() {
                 {/*  build the loop based on the types available - make endpoint for this? */}
                 <Form.Select
                   required
-                  name="tipoAzienda"
-                  value={formData.tipoAzienda}
+                  name="tipo"
+                  value={formData.tipo}
                   onChange={handleChange}
                 >
                   <option value="">Seleziona...</option>
@@ -216,13 +217,12 @@ function CreateClientForm() {
               </Form.Group>
             </Col>
             <Col>
-              {" "}
               {/*  fatturato anuale */}
               <Form.Group
                 className="mb-3"
                 controlId="formFatturatoAnuale"
               >
-                <Form.Label>Fatturato Anuale in Euros</Form.Label>
+                <Form.Label>Fatturato Anuale in Euro</Form.Label>
                 <InputGroup>
                   <InputGroup.Text>€ </InputGroup.Text>
                   <Form.Control
@@ -240,7 +240,6 @@ function CreateClientForm() {
               </Form.Group>
             </Col>
             <Col>
-              {" "}
               {/*  telefono aziendale */}
               <Form.Group
                 className="mb-3"
@@ -248,10 +247,20 @@ function CreateClientForm() {
               >
                 <Form.Label>Telefono aziendale</Form.Label>
                 <br />
-                <Form.Control
-                  type="number"
-                  placeholder="Inserisce il telefono"
-                />
+                <InputGroup>
+                  <InputGroup.Text>+39 </InputGroup.Text>
+                  <Form.Control
+                    required
+                    type="number"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleChange}
+                    placeholder="Inserisce il telefono"
+                  />
+                </InputGroup>
+                <Form.Control.Feedback type="invalid">
+                  Campo obbligatorio.
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -291,14 +300,14 @@ function CreateClientForm() {
                 <br />
                 <Form.Control
                   required
-                  type="email"
-                  name="emailContatto"
-                  value={formData.emailContatto}
+                  type="text"
+                  name="cognomeContatto"
+                  value={formData.cognomeContatto}
                   onChange={handleChange}
-                  placeholder="m.rossi@azienda.it"
+                  placeholder="Rossi"
                 />
                 <Form.Control.Feedback type="invalid">
-                  Inserisci un'email valida
+                  Campo obbligatorio
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
@@ -311,11 +320,17 @@ function CreateClientForm() {
                 controlId="formEmailPersonaContatto"
               >
                 <Form.Label>Email persona di contatto</Form.Label>
-                <br />
                 <Form.Control
+                  required
                   type="email"
+                  name="emailContatto"
+                  value={formData.emailContatto}
+                  onChange={handleChange}
                   placeholder="Inserisce la mail"
                 />
+                <Form.Control.Feedback type="invalid">
+                  Inserisci un'email valida.
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
 
@@ -326,15 +341,17 @@ function CreateClientForm() {
                 controlId="formTelContatto"
               >
                 <Form.Label>Telefono di contatto</Form.Label>
-                <br />
-                <Form.Control
-                  required
-                  type="number"
-                  name="telefonoContatto"
-                  value={formData.telefonoContatto}
-                  onChange={handleChange}
-                  placeholder="Inserisce il telefono"
-                />
+                <InputGroup>
+                  <InputGroup.Text>+39 </InputGroup.Text>
+                  <Form.Control
+                    required
+                    type="number"
+                    name="telefonoContatto"
+                    value={formData.telefonoContatto}
+                    onChange={handleChange}
+                    placeholder="Inserisce il telefono"
+                  />
+                </InputGroup>
                 <Form.Control.Feedback type="invalid">
                   Campo obbligatorio
                 </Form.Control.Feedback>
