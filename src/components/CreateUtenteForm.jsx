@@ -174,6 +174,16 @@ function CreateUtenteForm() {
           {isLoading ? "Registrazione in corso..." : "Registrati"}
         </Button>
       </Form>
+
+      <div className="text-center">
+        <p className=" mt-3 pt-5">Sei già registrato? </p>
+        <Button
+          variant="warning"
+          onClick={() => navigate("/login")}
+        >
+          Accedi qui
+        </Button>
+      </div>
     </Container>
   )
 }

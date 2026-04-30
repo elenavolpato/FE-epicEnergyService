@@ -33,7 +33,7 @@ function Home() {
 
   return (
     <>
-      <Container className="h-100 p-5 text-center">
+      <Container className="h-100 p-5 text-center fluid">
         <Row>
           <Col>
             <Button
@@ -60,9 +60,9 @@ function Home() {
               Log out
             </Button>
           </Col>
-        </Row>
+        </Row>{" "}
+        {showClienti && <ClientiTable clienti={clientiData} />}
       </Container>
-      {showClienti && <ClientiTable clienti={clientiData} />}
     </>
   )
 }

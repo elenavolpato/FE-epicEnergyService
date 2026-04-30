@@ -100,7 +100,14 @@ function CreateClientForm() {
   }
 
   return (
-    <Container className="py-5 bg-grey h-100">
+    <Container className="py-5 bg-dark h-100">
+      <Button
+        variant="outline-light"
+        className="position-absolute top-0 mt-5"
+        onClick={() => navigate("/home")}
+      >
+        Indietro
+      </Button>
       <h4 className=" pb-4">Inserisci i dati della Azienda</h4>
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">Azienda salvata con successo!</Alert>}

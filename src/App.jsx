@@ -10,7 +10,7 @@ function App() {
   return (
     <div
       data-bs-theme="dark"
-      className="bg-dark text-white h-100"
+      className="bg-dark text-white vh-100"
     >
       <BrowserRouter>
         <h1 className="text-warning text-center pt-3">EPIC Energy Services</h1>
