@@ -61,6 +61,7 @@ function CreateClientForm() {
     setIsLoading(true)
     setError(null)
 
+    // eslint-disable-next-line no-unused-vars
     const stripProvincia = ({ provincia, ...rest }) => rest // ✅ add this
 
     const payload = {

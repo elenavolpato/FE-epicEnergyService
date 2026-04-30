@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 import "./App.css"
 import CreateClientForm from "./components/CreateClientForm"
 import "bootstrap/dist/css/bootstrap.min.css"
-
+import CreateUtenteForm from "./components/CreateUtenteForm"
 function App() {
   return (
     <div
@@ -12,8 +12,12 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route
-            path="/register"
+            path="/register/client"
             element={<CreateClientForm />}
+          />
+          <Route
+            path="/lala"
+            element={<CreateUtenteForm />}
           />
         </Routes>
       </BrowserRouter>
