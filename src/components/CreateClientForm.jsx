@@ -3,6 +3,7 @@ import Button from "react-bootstrap/Button"
 import Form from "react-bootstrap/Form"
 import AddAddressForm from "./AddAddressForm"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 function CreateClientForm() {
   const [validated, setValidated] = useState(false)
@@ -10,6 +11,8 @@ function CreateClientForm() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [sedeDiversa, setSedeDiversa] = useState(false)
+  const token = localStorage.getItem("token")
+  const navigate = useNavigate()
 
   const [formData, setFormData] = useState({
     ragioneSociale: "",
@@ -17,7 +20,7 @@ function CreateClientForm() {
     email: "",
     pec: "",
     tipo: "",
-    fatturatoAnuale: "",
+    fatturatoAnnuale: 0,
     telefono: "",
     nomeContatto: "",
     cognomeContatto: "",
@@ -62,27 +65,33 @@ function CreateClientForm() {
     setError(null)
 
     // eslint-disable-next-line no-unused-vars
-    const stripProvincia = ({ provincia, ...rest }) => rest // ✅ add this
+    const stripProvincia = ({ provincia, ...rest }) => rest
 
     const payload = {
       ...formData,
-      sedeLegale: stripProvincia(sedeLegale), // ✅ strip here
-      sedeOperativa: sedeDiversa
-        ? stripProvincia(sedeOperativa)
-        : stripProvincia(sedeLegale),
+      fatturatoAnnuale: Number(formData.fatturatoAnnuale),
+      sedeLegale: stripProvincia(sedeLegale),
+      sedeOperativa: sedeDiversa ? stripProvincia(sedeOperativa) : stripProvincia(sedeLegale),
     }
 
     try {
       const response = await fetch("http://localhost:3001/clienti", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       })
       console.log(payload)
       if (!response.ok) throw new Error("Errore durante il salvataggio")
 
       setSuccess(true)
+      const data = await response.json()
+      console.log("dataaaaa", data)
+      localStorage.setItem("clientId", data)
       setValidated(false)
+      navigate("/register/client/logo/:clienteId")
     } catch (err) {
       setError(err.message)
     } finally {
@@ -91,13 +100,10 @@ function CreateClientForm() {
   }
 
   return (
-    <Container className="py-5 bg-grey">
-      <h1 className="text-warning">EPIC Energy Services</h1>
+    <Container className="py-5 bg-grey h-100">
       <h4 className=" pb-4">Inserisci i dati della Azienda</h4>
       {error && <Alert variant="danger">{error}</Alert>}
-      {success && (
-        <Alert variant="success">Azienda salvata con successo!</Alert>
-      )}
+      {success && <Alert variant="success">Azienda salvata con successo!</Alert>}
       <Form
         noValidate
         validated={validated}
@@ -122,9 +128,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="Nome della Azienda S.P.A."
                 />
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
             {/* partita IVA */}
@@ -143,9 +147,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="12345678910"
                 />
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -185,9 +187,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="azienda@pecmail.it"
                 />
-                <Form.Control.Feedback type="invalid">
-                  Inserisci una PEC valida
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Inserisci una PEC valida</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -212,32 +212,28 @@ function CreateClientForm() {
                   <option value="SPA">SPA</option>
                   <option value="SRL">SRL</option>
                 </Form.Select>
-                <Form.Control.Feedback type="invalid">
-                  Seleziona un tipo azienda
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Seleziona un tipo azienda</Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col>
-              {/*  fatturato anuale */}
+              {/*  fatturato annuale */}
               <Form.Group
                 className="mb-3"
-                controlId="formFatturatoAnuale"
+                controlId="formFatturatoAnnuale"
               >
-                <Form.Label>Fatturato Anuale in Euro</Form.Label>
+                <Form.Label>Fatturato Annuale in Euro</Form.Label>
                 <InputGroup>
                   <InputGroup.Text>€ </InputGroup.Text>
                   <Form.Control
                     required
                     type="number"
-                    name="fatturatoAnuale"
-                    value={formData.fatturatoAnuale}
+                    name="fatturatoAnnuale"
+                    value={formData.fatturatoAnnuale}
                     onChange={handleChange}
                     placeholder="10000"
                   />
                 </InputGroup>
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col>
@@ -259,9 +255,7 @@ function CreateClientForm() {
                     placeholder="Inserisce il telefono"
                   />
                 </InputGroup>
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio.
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio.</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -285,9 +279,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="Mario"
                 />
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
             {/*  cognome  contato */}
@@ -307,9 +299,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="Rossi"
                 />
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -329,9 +319,7 @@ function CreateClientForm() {
                   onChange={handleChange}
                   placeholder="Inserisce la mail"
                 />
-                <Form.Control.Feedback type="invalid">
-                  Inserisci un'email valida.
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Inserisci un'email valida.</Form.Control.Feedback>
               </Form.Group>
             </Col>
 
@@ -353,9 +341,7 @@ function CreateClientForm() {
                     placeholder="Inserisce il telefono"
                   />
                 </InputGroup>
-                <Form.Control.Feedback type="invalid">
-                  Campo obbligatorio
-                </Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">Campo obbligatorio</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>

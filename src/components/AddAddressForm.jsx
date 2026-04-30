@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react"
 import { Form, Row, Col, Spinner } from "react-bootstrap"
 
-const AddAddressForm = ({
-  formIdPrefix = "addr",
-  onValidationChange,
-  address,
-  setAddress,
-}) => {
+const AddAddressForm = ({ formIdPrefix = "addr", onValidationChange, address, setAddress }) => {
   const [provinces, setProvinces] = useState([])
   const [comuni, setComuni] = useState([])
   const [selectedProvince, setSelectedProvince] = useState("")
   const [isLoadingComuni, setIsLoadingComuni] = useState(false)
+  const token = localStorage.getItem("token")
 
   // Fetch Provinces on Mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch("http://localhost:3001/province")
+        const response = await fetch("http://localhost:3001/province", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
         const data = await response.json()
         setProvinces(data)
-        console.log(data)
       } catch (error) {
         console.error("Error fetching provinces:", error)
       }
@@ -35,12 +35,14 @@ const AddAddressForm = ({
     const fetchComuni = async () => {
       setIsLoadingComuni(true)
       try {
-        const response = await fetch(
-          `http://localhost:3001/provincia?sigla=${selectedProvince}`,
-        )
+        const response = await fetch(`http://localhost:3001/comune/provincia/${selectedProvince}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
         const data = await response.json()
         if (!isIgnore) setComuni(data)
-        console.log("comuni", data)
       } catch (error) {
         console.error(error)
       } finally {
@@ -178,9 +180,7 @@ const AddAddressForm = ({
             onChange={handleChange}
             disabled={selectedProvince === "" || isLoadingComuni}
           >
-            <option value="">
-              {isLoadingComuni ? "Caricamento..." : "Seleziona..."}
-            </option>
+            <option value="">{isLoadingComuni ? "Caricamento..." : "Seleziona..."}</option>
             {comuni.map((c) => (
               <option
                 key={c.id}

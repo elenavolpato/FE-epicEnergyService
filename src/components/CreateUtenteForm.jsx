@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { Container, Form, Button, Alert, Row, Col } from "react-bootstrap"
+import { useNavigate } from "react-router-dom"
 
 function CreateUtenteForm() {
   const [validated, setValidated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const navigate = useNavigate()
 
   const [formData, setFormData] = useState({
     username: "",
@@ -42,10 +44,8 @@ function CreateUtenteForm() {
       console.log(formData)
       if (!response.ok) throw new Error("Errore durante la registrazione")
 
-      const data = await response.json()
-      console.log("response body", data)
-
       setSuccess(true)
+      navigate("/login")
       setValidated(false)
     } catch (err) {
       setError(err.message)
@@ -56,15 +56,13 @@ function CreateUtenteForm() {
 
   return (
     <Container
-      className="py-5"
+      className="py-5 vh-100"
       style={{ maxWidth: 500 }}
     >
       <h4 className="mb-4">Registrazione</h4>
 
       {error && <Alert variant="danger">{error}</Alert>}
-      {success && (
-        <Alert variant="success">Registrazione avvenuta con successo!</Alert>
-      )}
+      {success && <Alert variant="success">Registrazione avvenuta con successo!</Alert>}
 
       <Form
         noValidate
@@ -100,10 +98,7 @@ function CreateUtenteForm() {
             onChange={handleChange}
             placeholder="mario@example.it"
           />
-          <Form.Control.Feedback type="invalid">
-            L'email inserita non è nel formato corretto, inserire una mail
-            valida.
-          </Form.Control.Feedback>
+          <Form.Control.Feedback type="invalid">L'email inserita non è nel formato corretto, inserire una mail valida.</Form.Control.Feedback>
         </Form.Group>
 
         {/* Password */}
@@ -123,12 +118,9 @@ function CreateUtenteForm() {
             pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
           />
           <Form.Control.Feedback type="invalid">
-            La password deve contenere almeno 8 caratteri, una lettera
-            maiuscola, una minuscola e un numero.
+            La password deve contenere almeno 8 caratteri, una lettera maiuscola, una minuscola e un numero.
           </Form.Control.Feedback>
-          <Form.Text className="text-muted">
-            Almeno 8 caratteri, una maiuscola, una minuscola e un numero.
-          </Form.Text>
+          <Form.Text className="text-muted">Almeno 8 caratteri, una maiuscola, una minuscola e un numero.</Form.Text>
         </Form.Group>
 
         {/* Nome & Cognome */}
@@ -149,9 +141,7 @@ function CreateUtenteForm() {
                 minLength={2}
                 maxLength={30}
               />
-              <Form.Control.Feedback type="invalid">
-                Il nome deve essere compreso tra i 2 e i 30 caratteri.
-              </Form.Control.Feedback>
+              <Form.Control.Feedback type="invalid">Il nome deve essere compreso tra i 2 e i 30 caratteri.</Form.Control.Feedback>
             </Form.Group>
           </Col>
           <Col>
@@ -170,9 +160,7 @@ function CreateUtenteForm() {
                 minLength={2}
                 maxLength={30}
               />
-              <Form.Control.Feedback type="invalid">
-                Il cognome deve essere compreso tra i 2 e i 30 caratteri.
-              </Form.Control.Feedback>
+              <Form.Control.Feedback type="invalid">Il cognome deve essere compreso tra i 2 e i 30 caratteri.</Form.Control.Feedback>
             </Form.Group>
           </Col>
         </Row>
